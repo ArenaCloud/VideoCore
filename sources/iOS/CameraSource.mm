@@ -389,7 +389,6 @@ namespace videocore { namespace iOS {
         m_output = output;
         
         //auto mixer = std::static_pointer_cast<IVideoMixer>(output);
-        
     }
     void
     CameraSource::bufferCaptured(CVPixelBufferRef pixelBufferRef)
@@ -405,7 +404,6 @@ namespace videocore { namespace iOS {
             
             pixelBuffer->setState(kVCPixelBufferStateEnqueued);
             output->pushBuffer((uint8_t*)&pixelBuffer, sizeof(pixelBuffer), md);
-            
         }
     }
     

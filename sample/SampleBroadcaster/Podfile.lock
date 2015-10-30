@@ -26,7 +26,7 @@ DEPENDENCIES:
 
 EXTERNAL SOURCES:
   VideoCore:
-    :path: "../.."
+    :path: ../..
 
 SPEC CHECKSUMS:
   boost: 6c5c8d8daef26ac83c1e1c00ad14de62b80161d7

@@ -57,6 +57,7 @@
 @property (nonatomic, strong) EAGLContext* context;
 @property (nonatomic) CAEAGLLayer* glLayer;
 @end
+
 @implementation VCPreviewView
 
 #pragma mark - UIView overrides
@@ -163,9 +164,14 @@
     }
 }
 #pragma mark - Public Methods
-
 - (void) drawFrame:(CVPixelBufferRef)pixelBuffer
 {
+    if (self.isGotScreenShot) {
+        if (self.m_delegate!=nil) {
+            [self.m_delegate onScreenShot:pixelBuffer];
+        }
+        self.isGotScreenShot = NO;
+    }
     
     if(_paused) return;
     
@@ -326,6 +332,16 @@
     glVertexAttribPointer(attrtex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, BUFFER_OFFSET(8));
     
     [EAGLContext setCurrentContext:current];
+}
+
+- (void) takeScreenShot
+{
+    self.isGotScreenShot = YES;
+}
+
+- (void) setScreenShotDelegate:(id)sender
+{
+    self.m_delegate = sender;
 }
 
 @end

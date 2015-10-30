@@ -34,6 +34,7 @@
 #include <sys/prctl.h>
 #define pthread_setname_np(thread_name) prctl(PR_SET_NAME, thread_name)
 #endif
+
 #include <condition_variable>
 #include <atomic>
 #include <mutex>
@@ -95,6 +96,9 @@ namespace videocore {
                     break;
             }
             dispatch_set_target_queue(m_queue, dispatch_get_global_queue(p, 0 ));
+            
+            m_size = 0;
+            
 #endif
         }
         ~JobQueue()
@@ -121,9 +125,13 @@ namespace videocore {
             m_jobMutex.unlock();
             m_cond.notify_all();
 #else
+            m_size++;
+            
             dispatch_async(m_queue, ^{
                 if(!this->m_exiting.load()) {
                     (*job)();
+                    
+                    m_size--;
                 }
             });
 #endif
@@ -140,8 +148,12 @@ namespace videocore {
                 m_jobDoneCond.wait(lk);
             }
 #else
+            m_size++;
+            
             dispatch_sync(m_queue, ^{
                 (*job)();
+                
+                m_size--;
             });
 #endif
         }
@@ -149,6 +161,19 @@ namespace videocore {
 #if !_USE_GCD
             enqueue([=]() { pthread_setname_np(name.c_str()); });
 #endif
+        }
+        //add by WilliamShi
+        int size()
+        {
+            int size = 0;
+#if !_USE_GCD
+            m_jobMutex.lock();
+            size = m_jobs.size();
+            m_jobMutex.unlock();
+#else
+            size = m_size.load();
+#endif
+            return size;
         }
     private:
 #if !_USE_GCD
@@ -180,9 +205,9 @@ namespace videocore {
         std::queue<std::shared_ptr<Job>>             m_jobs;
 #else
         dispatch_queue_t            m_queue;
+        std::atomic<int>            m_size;
 #endif
         std::atomic<bool>           m_exiting;
-        
     };
 }
 

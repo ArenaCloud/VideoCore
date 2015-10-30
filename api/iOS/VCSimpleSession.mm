@@ -36,7 +36,7 @@
 #ifdef __APPLE__
 #   include <videocore/mixers/Apple/AudioMixer.h>
 #   include <videocore/transforms/Apple/MP4Multiplexer.h>
-#   include <videocore/transforms/Apple/H264Encode.h>
+#   include <videocore/transforms/Apple/H264Encode+.h>
 #   include <videocore/sources/Apple/PixelBufferSource.h>
 #   ifdef TARGET_OS_IPHONE
 #       include <videocore/sources/iOS/CameraSource.h>
@@ -85,7 +85,7 @@ namespace videocore { namespace simpleApi {
 }
 }
 
-@interface VCSimpleSession()
+@interface VCSimpleSession() <ScreenShotDelegate>
 {
 
     VCPreviewView* _previewView;
@@ -474,6 +474,7 @@ namespace videocore { namespace simpleApi {
     self.aspectMode = aspectMode;
 
     _previewView = [[VCPreviewView alloc] init];
+    [_previewView setScreenShotDelegate:self];
     self.videoZoomFactor = 1.f;
 
     _cameraState = cameraState;
@@ -523,7 +524,7 @@ namespace videocore { namespace simpleApi {
 {
     std::stringstream uri ;
     uri << (rtmpUrl ? [rtmpUrl UTF8String] : "") << "/" << (streamKey ? [streamKey UTF8String] : "");
-
+    
     m_outputSession.reset(
                           new videocore::RTMPSession ( uri.str(),
                                                       [=](videocore::RTMPSession& session,
@@ -550,7 +551,6 @@ namespace videocore { namespace simpleApi {
                                                               case kClientStateError:
                                                                   self.rtmpSessionState = VCSessionStateError;
                                                                   [self endRtmpSession];
-                                                                  self->m_outputSession.reset();
                                                                   break;
                                                               case kClientStateNotConnected:
                                                                   self.rtmpSessionState = VCSessionStateEnded;
@@ -584,7 +584,7 @@ namespace videocore { namespace simpleApi {
                                                   if ([bSelf.delegate respondsToSelector:@selector(detectedThroughput:videoRate:)]) {
                                                       [bSelf.delegate detectedThroughput:predicted videoRate:video->bitrate()];
                                                   }
-                                                  
+
 
                                                   int videoBr = 0;
 
@@ -689,6 +689,24 @@ namespace videocore { namespace simpleApi {
         NSLog(@"FILTER IS : [%d]", (int)_filter);
         std::string convertString([filterName UTF8String]);
         m_videoMixer->setSourceFilter(m_cameraSource, dynamic_cast<videocore::IVideoFilter*>(m_videoMixer->filterFactory().filter(convertString))); // default is com.videocore.filters.bgra
+}
+
+- (void) takeScreenShot
+{
+    if(_previewView!=nil)
+    {
+        [_previewView takeScreenShot];
+    }
+}
+
+- (void)onScreenShot:(CVPixelBufferRef)pixelBuffer
+{
+    NSLog(@"onScreenShot pixelBuffer");
+    
+    if(_delegate)
+    {
+        [_delegate didGotScreenShot:pixelBuffer];
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -897,4 +915,5 @@ namespace videocore { namespace simpleApi {
     NSString *basePath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
     return basePath;
 }
+
 @end

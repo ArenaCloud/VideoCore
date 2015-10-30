@@ -193,7 +193,6 @@ namespace videocore {
                     ret->put((uint8_t*)data, size);
                 }
                 
-                
                 m_mixQueue.enqueue([=]() {
                     auto mixTime = cMixTime;
                     

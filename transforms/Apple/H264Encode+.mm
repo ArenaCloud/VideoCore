@@ -34,7 +34,7 @@
 #endif
 
 #include <stdio.h>
-#include <videocore/transforms/Apple/H264Encode.h>
+#include <videocore/transforms/Apple/H264Encode+.h>
 #include <videocore/mixers/IVideoMixer.hpp>
 
 #if VERSION_OK==1
@@ -52,6 +52,8 @@ namespace videocore { namespace Apple {
                     VTEncodeInfoFlags infoFlags,
                     CMSampleBufferRef sampleBuffer )
     {
+        if(sampleBuffer==nil) return;
+        
         CMBlockBufferRef block = CMSampleBufferGetDataBuffer(sampleBuffer);
         CFArrayRef attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, false);
         CMTime pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
@@ -272,7 +274,6 @@ namespace videocore { namespace Apple {
             l->pushBuffer(data, size, md);
         }
 #endif
-        
     }
     void
     H264Encode::requestKeyframe()

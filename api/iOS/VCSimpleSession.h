@@ -72,6 +72,10 @@ typedef NS_ENUM(NSInteger, VCFilter) {
 @protocol VCSessionDelegate <NSObject>
 @required
 - (void) connectionStatusChanged: (VCSessionState) sessionState;
+
+//ScreenShot
+- (void) didGotScreenShot:(CVPixelBufferRef)pixelBuffer;
+
 @optional
 - (void) didAddCameraSource:(VCSimpleSession*)session;
 
@@ -152,5 +156,7 @@ typedef NS_ENUM(NSInteger, VCFilter) {
 
 - (void) addPixelBufferSource: (UIImage*) image
                      withRect: (CGRect) rect;
+
+- (void) takeScreenShot;
 
 @end

@@ -81,6 +81,7 @@ namespace videocore
             streamStatusChanged(status);
         });
         
+        m_isNetworkJobQueueFull = false;
     }
     RTMPSession::~RTMPSession()
     {
@@ -127,7 +128,7 @@ namespace videocore
         buf->put(const_cast<uint8_t*>(data), size);
         
         const RTMPMetadata_t inMetadata = static_cast<const RTMPMetadata_t&>(metadata);
-
+        
         m_jobQueue.enqueue([=]() {
             
             if(!this->m_ending) {
@@ -187,8 +188,6 @@ namespace videocore
                 
                 this->write(&(*outb)[0], outb->size(), packetTime, inMetadata.getData<kRTMPMetadataIsKeyframe>() );
             }
-            
-            
         });
     }
     void
@@ -208,6 +207,19 @@ namespace videocore
     RTMPSession::write(uint8_t* data, size_t size, std::chrono::steady_clock::time_point packetTime, bool isKeyframe)
     {
         if(size > 0) {
+//            printf("m_networkQueue Count:%d\n",m_networkQueue.size());
+            
+            if(m_networkQueue.size()>=200)
+            {
+                m_isNetworkJobQueueFull = true;
+            }
+            
+            if (m_networkQueue.size()<=70 && isKeyframe) {
+                m_isNetworkJobQueueFull = false;
+            }
+            
+            if (m_isNetworkJobQueueFull) return;
+            
             std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(size);
             buf->put(data, size);
             
@@ -220,6 +232,7 @@ namespace videocore
             if(m_bufferSize > kMaxSendbufferSize && isKeyframe) {
                 m_clearing = true;
             }
+
             m_networkQueue.enqueue([=]() {
                 size_t tosend = size;
                 uint8_t* p ;
@@ -245,7 +258,6 @@ namespace videocore
                 this->increaseBuffer(-int64_t(size));
             });
         }
-        
     }
     void
     RTMPSession::dataReceived()
@@ -947,6 +959,11 @@ namespace videocore
                 // treat non-string property values as empty
                 p += amfPrimitiveObjectSize(p);
                 props[propName] = "";
+            }
+            // Fix large AMF object may break to multiple packets
+            // that crash us.
+            if (strcmp(propName, "code") == 0) {
+                break;
             }
         } while (get_be24(p) != AMF_DATA_TYPE_OBJECT_END);
         

@@ -429,7 +429,7 @@ namespace videocore { namespace iOS {
         if(zIndex < m_zRange.first) {
             m_zRange.first = zIndex;
         }
-        if(zIndex > m_zRange.second){
+        if(zIndex > m_zRange.second) {
             m_zRange.second = zIndex;
         }
         

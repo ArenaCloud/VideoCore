@@ -125,6 +125,7 @@ namespace videocore
     private:
         JobQueue            m_networkQueue;
         JobQueue            m_jobQueue;
+        
         std::chrono::steady_clock::time_point m_sentKeyframe;
         
 #ifdef __APPLE__
@@ -171,9 +172,11 @@ namespace videocore
         bool            m_audioStereo;
         
         ClientState_t  m_state;
-      
+
         bool            m_clearing;
         bool            m_ending;
+                
+        bool            m_isNetworkJobQueueFull;
     };
 }
 
